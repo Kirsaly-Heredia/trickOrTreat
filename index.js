@@ -7,7 +7,6 @@ var bodyParser = require('body-parser');
 var cookieParser = require('cookie-parser');
 var mongoose = require('mongoose');
 var passport = require('passport');
-var Strategy = require('passport-facebook');
 
 // load .env
 require('dotenv').config();
@@ -61,14 +60,27 @@ auth.registerRoutes();
 
 // home page
 app.get('/', function(req, res) {
-  if (req.session.treat) {
+  if (req.user) {
    return res.render('view', {
-     msg: 'You have a treat: ' + req.session.treat
+     msg: req.user.treats.join(',')
    }); 
   }
   return res.render('view', {
     msg: 'No treats.'
   });
+});
+
+app.post('/candy', function(req, res) {
+  var User = require('./models/user');
+  User.findByIdAndUpdate(req.user._id, {$push: {treats: req.body.treat}}, function(err, user) {
+    if (err) {
+      return res.status('500').json({
+        status: 'error'
+      });
+    }
+    return res.json(user.treats);
+  });
+                         
 });
 
 app.get('/treat', function(req, res) {
@@ -96,34 +108,6 @@ app.get('/clear', function(req, res) {
   res.redirect('/');
 });
 
-//facebook authentication
-passport.use(new Strategy({
-    clientID: process.env.CLIENT_ID,
-    clientSecret: process.env.SECRET,
-    callbackURL: "http://localhost:3000/login/facebook/return"
-  },
-  function(accessToken, refreshToken, profile, cb) {
-    return cb(null, profile);
-  }
-));
-
-passport.serializeUser(function(user, cb) {
-  cb(null, user);
-});
-
-passport.deserializeUser(function(obj, cb) {
-  cb(null, obj);
-});
-
-app.use(passport.initialize());
-app.use(passport.session());
-
-app.get('/login/facebook', passport.authenticate('facebook'));
-
-app.get('/login/facebook/return', passport.authenticate('facebook', {  failureRedirect: '/login' }),
-  function(req, res) {
-    res.redirect('/');
-  });
 
 // start server
 app.listen(PORT, function() {
