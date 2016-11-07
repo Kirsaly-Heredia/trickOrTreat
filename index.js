@@ -98,8 +98,8 @@ app.get('/clear', function(req, res) {
 
 //facebook authentication
 passport.use(new Strategy({
-    clientID: 1198015333654035,
-    clientSecret: '46f2a2d6a9f9ee0e9d20a5fef3eb580d',
+    clientID: process.env.CLIENT_ID,
+    clientSecret: process.env.SECRET,
     callbackURL: "http://localhost:3000/login/facebook/return"
   },
   function(accessToken, refreshToken, profile, cb) {
